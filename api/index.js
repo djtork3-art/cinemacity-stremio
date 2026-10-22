@@ -18,6 +18,17 @@ module.exports = async (req, res) => {
   const chosen = parts[1] ? config(parts[1]) : {movies:true,series:true,quality:'all'};
   if (!chosen) return res.status(404).json({ error: 'Invalid configuration' });
   const endpoint = parts[2];
+  if (endpoint === 'health.json' && !parts[1]) {
+    const status = { addon:'CinemaCity', tmdbConfigured:Boolean(process.env.TMDB_API_KEY), sourceReachable:false, sourceHttpStatus:null };
+    try {
+      const base=(process.env.CINEMACITY_URL||'https://cinemacity.cc').replace(/\/$/,'');
+      const response=await fetch(base,{redirect:'follow',signal:AbortSignal.timeout(8000),headers:{'User-Agent':'Mozilla/5.0','Referer':base+'/'}});
+      status.sourceReachable=response.ok;
+      status.sourceHttpStatus=response.status;
+    } catch(e) {status.sourceError='connection_failed';}
+    res.setHeader('Cache-Control','no-store');
+    return res.status(200).json(status);
+  }
   if (endpoint === 'manifest.json') {
     return res.status(200).json({...manifest, behaviorHints:{...manifest.behaviorHints, configurable:true}, types:[...(chosen.movies?['movie']:[]),...(chosen.series?['series']:[])]});
   }
