@@ -89,7 +89,8 @@ function toStreams(data, title, type, season, episode) {
     const m=raw.trim().match(/^\[([^\]]+)\](.*)$/);
     const url=(m?m[2]:raw).trim();
     if (!/^https?:\/\//i.test(url)) return [];
-    return [{ name: 'CinemaCity', title: `${title} · ${m?.[1] || quality(url)}`, url }];
+    const hint = { proxyHeaders: { request: { Referer: BASE + '/', 'User-Agent': headers['User-Agent'] } } };
+    return [{ name: 'CinemaCity', title: `${title} · ${m?.[1] || quality(url)}`, url, behaviorHints: hint }];
   });
 }
 const manifest = {
