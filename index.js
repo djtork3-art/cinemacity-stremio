@@ -6,7 +6,7 @@ const BASE = (process.env.CINEMACITY_URL || 'https://cinemacity.cc').replace(/\/
 const API_KEY = process.env.TMDB_API_KEY;
 const COOKIE = process.env.CINEMACITY_COOKIE || '';
 const PORT = Number(process.env.PORT || 7000);
-const headers = { 'User-Agent': 'Mozilla/5.0 (compatible; Stremio-CinemaCity-Bridge/1.0)', Referer: BASE + '/' };
+const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36', Referer: BASE + '/' };
 if (COOKIE) headers.Cookie = COOKIE;
 
 async function fetchText(url, opts={}) {
@@ -20,13 +20,13 @@ async function tmdbInfo(type, id) {
   let tmdbId = id;
   if (/^tt\d+$/.test(id)) {
     const found = await fetch(`https://api.themoviedb.org/3/find/${encodeURIComponent(id)}?external_source=imdb_id&api_key=${encodeURIComponent(API_KEY)}`);
-    if (!found.ok) throw new Error('TMDB lookup falló');
+    if (!found.ok) throw new Error('TMDB lookup falló: HTTP '+found.status);
     const result = await found.json();
     tmdbId = result[kind === 'tv' ? 'tv_results' : 'movie_results']?.[0]?.id;
   } else if (id.startsWith('tmdb:')) tmdbId = id.slice(5);
   if (!/^\d+$/.test(String(tmdbId || ''))) throw new Error('ID no compatible');
   const res = await fetch(`https://api.themoviedb.org/3/${kind}/${tmdbId}?api_key=${encodeURIComponent(API_KEY)}`);
-  if (!res.ok) throw new Error('Consulta TMDB falló');
+  if (!res.ok) throw new Error('Consulta TMDB falló: HTTP '+res.status);
   const data = await res.json();
   return data.title || data.name;
 }
@@ -96,7 +96,7 @@ const manifest = {
   id: 'community.cinemacity.bridge', version: '1.0.0', name: 'CinemaCity Bridge (no oficial)',
   description: 'Adaptación experimental del proveedor CinemaCity de Nuvio. Requiere TMDB_API_KEY; la disponibilidad depende del sitio origen.',
   resources: ['stream'], types: ['movie', 'series'], idPrefixes: ['tt', 'tmdb:'], catalogs: [],
-  behaviorHints: { configurable: false }
+  behaviorHints: { configurable: true }
 };
 const builder = new addonBuilder(manifest);
 const streamHandler = async ({type, id}) => {
@@ -107,11 +107,15 @@ const streamHandler = async ({type, id}) => {
     const title = await tmdbInfo(type, mediaId);
     if (!title) return { streams: [] };
     const searchUrl = `${BASE}/?do=search&subaction=search&search_start=0&full_search=0&story=${encodeURIComponent(title)}`;
+    console.info('CinemaCity búsqueda:',type,mediaId,title);
     let page = findTitlePage(await fetchText(searchUrl), title);
     if (!page) page = findTitlePage(await fetchText(BASE), title);
-    if (!page) return { streams: [] };
+    if (!page) { console.warn('CinemaCity sin coincidencia:',title); return { streams: [] }; }
     const payload = decodePayload(await fetchText(page));
-    return { streams: toStreams(payload, title, type, season, episode) };
+    if (!payload) console.warn('CinemaCity no encontró datos de reproducción:',title);
+    const streams=toStreams(payload,title,type,season,episode);
+    console.info('CinemaCity streams encontrados:',streams.length);
+    return { streams };
   } catch (err) {
     console.error('CinemaCity:', err.message);
     return { streams: [] };
