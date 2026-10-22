@@ -9,8 +9,44 @@ const PORT = Number(process.env.PORT || 7000);
 const headers = { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0.0.0 Safari/537.36', Referer: BASE + '/' };
 if (COOKIE) headers.Cookie = COOKIE;
 
+// Site credentials live only in server environment variables. Never include them in addon links.
+const LOGIN_USER = process.env.CINEMACITY_USERNAME || '';
+const LOGIN_PASS = process.env.CINEMACITY_PASSWORD || '';
+let currentSession = null;
+let sessionExpires = 0;
+function cookieHeader(values) {
+  return values.map(v => v.split(';')[0].trim()).filter(v => /^[^=;]+=[^;]*$/.test(v)).join('; ');
+}
+async function obtainSession() {
+  if (COOKIE) return COOKIE;
+  if (!LOGIN_USER || !LOGIN_PASS) return '';
+  if (currentSession && Date.now() < sessionExpires) return currentSession;
+  const body = new URLSearchParams({
+    login_name: LOGIN_USER,
+    login_password: LOGIN_PASS,
+    login: 'submit',
+  });
+  // DataLife Engine commonly accepts its login form at this endpoint.
+  // The precise workflow for this CinemaCity installation is not verified.
+  const r = await fetch(BASE + '/index.php?do=login', {
+    method: 'POST',
+    headers: { ...headers, 'Content-Type': 'application/x-www-form-urlencoded' },
+    body,
+    redirect: 'manual',
+    signal: AbortSignal.timeout(12000)
+  });
+  const values = r.headers.getSetCookie?.() || (r.headers.get('set-cookie') ? [r.headers.get('set-cookie')] : []);
+  const result = cookieHeader(values);
+  if (!r.ok && ![301,302,303].includes(r.status)) throw new Error('CinemaCity login HTTP ' + r.status);
+  if (!result || !/dle_user_id=|dle_hash=|dle_password=|PHPSESSID=/.test(result)) throw new Error('CinemaCity login: sesión no confirmada');
+  currentSession = result;
+  sessionExpires = Date.now() + 10 * 60 * 1000;
+  return result;
+}
 async function fetchText(url, opts={}) {
-  const r = await fetch(url, { ...opts, headers: { ...headers, ...(opts.headers || {}) }, signal: AbortSignal.timeout(12000) });
+  const session = await obtainSession();
+  const requestHeaders = { ...headers, ...(session ? {Cookie:session} : {}), ...(opts.headers || {}) };
+  const r = await fetch(url, { ...opts, headers: requestHeaders, signal: AbortSignal.timeout(12000) });
   if (!r.ok) throw new Error(`HTTP ${r.status}: ${url}`);
   return r.text();
 }
