@@ -1,5 +1,6 @@
 'use strict';
 const { manifest, streamHandler } = require('../index');
+const landing = require('../landing');
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -7,6 +8,11 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(204).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
   const path = String(req.query.path || '').replace(/^\/+/, '');
+  if (!path) {
+    res.setHeader('Content-Type', 'text/html; charset=utf-8');
+    res.setHeader('Cache-Control','public, max-age=300');
+    return res.status(200).send(landing);
+  }
   if (path === 'manifest.json') return res.status(200).json(manifest);
   const match = path.match(/^stream\/(movie|series)\/([^/]+)\.json$/);
   if (!match) return res.status(404).json({ error: 'Not found' });
