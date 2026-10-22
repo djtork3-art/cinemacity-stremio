@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
   if (!chosen) return res.status(404).json({ error: 'Invalid configuration' });
   const endpoint = parts[2];
   if (endpoint === 'health.json' && !parts[1]) {
-    const status = { addon:'CinemaCity', tmdbConfigured:Boolean(process.env.TMDB_API_KEY), sourceReachable:false, sourceHttpStatus:null };
+    const status = { addon:'CinemaCity', tmdbConfigured:Boolean(process.env.TMDB_API_KEY), sourceReachable:false, sourceHttpStatus:null, loginConfigured:Boolean(process.env.CINEMACITY_USERNAME && process.env.CINEMACITY_PASSWORD) };
     try {
       const base=(process.env.CINEMACITY_URL||'https://cinemacity.cc').replace(/\/$/,'');
       const response=await fetch(base,{redirect:'follow',signal:AbortSignal.timeout(8000),headers:{'User-Agent':'Mozilla/5.0','Referer':base+'/'}});
