@@ -26,7 +26,29 @@ test('full movie flow returns stream and never exposes cookie/API key',async t=>
   mock(t,url=>new Response(url.includes('story=')?search:detail('https://media.test/movie.m3u8')));
   const result=await streamHandler({type:'movie',id:'tmdb:123'});
   assert.equal(result.streams[0].url,'https://media.test/movie.m3u8');
+  assert.equal(result.streams[0].behaviorHints.notWebReady,true);
   assert.doesNotMatch(JSON.stringify(result),/test-private/);
+});
+test('guest detail with an empty player is diagnosed as login required',async t=>{
+  mock(t,url=>new Response(url.includes('story=')?search:'<script>window.CCDeviceGuardRuntime={authenticated:false};</script>'+detail('')));
+  const errors=[]; const old=console.error; console.error=(...args)=>errors.push(args);
+  t.after(()=>{console.error=old;});
+  assert.deepEqual(await streamHandler({type:'series',id:'tmdb:123:1:1'}),{streams:[]});
+  assert.equal(errors[0][1].kind,'login_required');
+  assert.equal(errors[0][1].stage,'detail');
+  assert.doesNotMatch(JSON.stringify(errors),/test-private/);
+});
+test('authenticated empty player is distinguished from a missing payload',async t=>{
+  let page='';
+  mock(t,url=>new Response(url.includes('story=')?search:'<script>window.CCDeviceGuardRuntime={authenticated:true};</script>'+page));
+  const errors=[];const old=console.error;console.error=(...args)=>errors.push(args);
+  t.after(()=>{console.error=old;});
+  page=detail('');
+  await streamHandler({type:'movie',id:'tmdb:123'});
+  assert.equal(errors.pop()[1].kind,'empty_player_file');
+  page='<script>/* No player config */</script>';
+  await streamHandler({type:'movie',id:'tmdb:123'});
+  assert.equal(errors.pop()[1].kind,'player_payload_missing');
 });
 test('series selects episode 1 instead of episode 10',async t=>{
   mock(t,url=>new Response(url.includes('story=')?search:detail([
