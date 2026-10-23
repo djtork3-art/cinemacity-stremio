@@ -19,13 +19,13 @@ test('concurrent stream requests share one verified sign-in',async t=>{
     if(options.method==='POST'){
       counts.post++;return new Response(user,{headers:{'Set-Cookie':'account=synthetic-session; Path=/; Secure'}});
     }
-    if(url.searchParams.has('story')){counts.search++;assert.match(options.headers.Cookie,/account=synthetic-session/);return new Response('<div class="dar-short_item"><a href="/123.html">Sample</a></div>');}
+    if(url.pathname==='/news_pages.xml'){counts.search++;assert.match(options.headers.Cookie,/account=synthetic-session/);return new Response('<urlset><url><loc>https://site.test/movies/123-sample-2026.html</loc></url></urlset>');}
     if(url.pathname.endsWith('.html')){counts.detail++;return new Response(user+`<script>atob('${Buffer.from('file:"https://media.test/video.m3u8"').toString('base64')}')</script>`);}
     if(!options.headers.Cookie){counts.form++;await new Promise(r=>setTimeout(r,15));return new Response(form);}
     counts.verify++;return new Response(user);
   };
   const run=handler();const results=await Promise.all([run({type:'movie',id:'tmdb:1'}),run({type:'movie',id:'tmdb:2'})]);
-  assert.deepEqual(counts,{form:1,post:1,verify:1,search:2,detail:2});
+  assert.deepEqual(counts,{form:1,post:1,verify:1,search:1,detail:2});
   assert.ok(results.every(r=>r.streams.length===1));
   assert.doesNotMatch(JSON.stringify(results),/synthetic-/);
 });

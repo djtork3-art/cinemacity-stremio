@@ -26,8 +26,8 @@ async function run() {
         const url = new URL(input);
         if (url.origin === 'https://api.themoviedb.org') return new Response(JSON.stringify({name:'Offline sample'}));
         if (url.origin !== 'https://offline.test') throw new Error('unexpected_offline_request');
-        if (url.pathname === '/fixture.html') return new Response(html);
-        if (url.searchParams.get('do') === 'search') return new Response('<div class="dar-short_item"><a href="/fixture.html">Offline sample</a></div>');
+        if (url.pathname.endsWith('.html')) return new Response(html);
+        if (url.pathname === '/news_pages.xml') return new Response('<urlset><url><loc>https://offline.test/tv-series/1-offline-sample-2026.html</loc></url></urlset>');
         throw new Error('unexpected_offline_request');
       };
       console.info = console.warn = () => {};

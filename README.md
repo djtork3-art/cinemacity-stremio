@@ -10,7 +10,7 @@ Este proyecto es **experimental**. La extracción se ha comprobado offline con H
 
 1. Importa este repositorio desde https://vercel.com/new.
 2. Usa **Node.js 20 o superior**.
-3. Configura la variable de entorno **TMDB_API_KEY** con tu clave de https://www.themoviedb.org/settings/api.
+3. Configura **TMDB_API_KEY** con tu propia clave de https://www.themoviedb.org/settings/api si quieres usar TMDB. Para identificadores IMDb se puede resolver el título mediante Cinemeta sin clave.
 4. El login automático queda desactivado. Si dispones de autorización para el acceso automatizado con tu cuenta, configura **CINEMACITY_ENABLE_LOGIN=true**, **CINEMACITY_USERNAME** y **CINEMACITY_PASSWORD** como variables privadas. El addon descubre el formulario `data-cc-login-form` del sitio (en el HTML analizado apunta a `/index.php?do=register`), envía los campos solo al mismo origen HTTPS y verifica la sesión con una nueva página. El flujo está probado con respuestas sintéticas; no se ha verificado un login real ni resuelve un desafío de Cloudflare. No introduzcas credenciales en la página pública ni en enlaces.
 5. Despliega.
 6. Abre `https://TU-DOMINIO.vercel.app/manifest.json` para comprobar que devuelve JSON.
@@ -30,7 +30,7 @@ Visita `http://localhost:7000/manifest.json`.
 
 ## Variables
 
-- `TMDB_API_KEY` (obligatoria para resolver títulos).
+- `TMDB_API_KEY` (opcional para IMDb con Cinemeta; necesaria para identificadores `tmdb:`).
 - `CINEMACITY_URL` (opcional).
 - `CINEMACITY_USERNAME` (opcional, usuario o correo; solo en entorno privado).
 - `CINEMACITY_PASSWORD` (opcional, solo en entorno privado).
@@ -85,7 +85,15 @@ node scripts/inspect-html.js "C:\ruta\ficha-visitante.html" "C:\ruta\ficha-auten
 
 Este comando sustituye todas las peticiones por respuestas locales, desactiva credenciales, no ejecuta los scripts del HTML y prueba la extracción de S1E1. Solo muestra estado de autenticación, número de streams e indicadores de diagnóstico. No prueba la reproducción. No subas estos HTML al repositorio: pueden contener tokens personales o URLs temporales.
 
-Los logs distinguen `tmdb` y `cinemacity`, y fases como `lookup`, `title`, `search`, `detail` y `login`. No registran URL, cuerpo, cookie, clave ni mensajes crudos de excepciones. Los tiempos de espera cubren cabeceras y lectura del cuerpo; el tamaño está limitado a 2 MiB (512 KiB en health).
+Los logs distinguen `tmdb`, `cinemeta` y `cinemacity`, y fases como `lookup`, `title`, `catalog`, `detail` y `login`. No registran URL, cuerpo, cookie, clave ni mensajes crudos de excepciones. Los tiempos de espera cubren cabeceras y lectura del cuerpo; el tamaño está limitado a 2 MiB (512 KiB en health).
+
+## Adaptación del addon local (1.3.0)
+
+La selección de fichas y extracción del reproductor se han adaptado de la versión local que el usuario confirmó que reproduce en Stremio. Se utiliza `/news_pages.xml` como catálogo, con caché de 12 horas por instancia y peticiones concurrentes compartidas. Las fichas se seleccionan por título, año y tipo; solo se admiten entradas del mismo origen.
+
+Se conservan los formatos de temporadas, episodios, calidades y URLset del reproductor, y sus cabeceras de reproducción. Se corrigen la sustitución accidental de una temporada ausente y la separación incorrecta de calidades o URLs con comas. El contenido JavaScript se analiza como datos, sin ejecutarlo.
+
+La versión local obtiene las páginas mediante Chrome y su sesión. Ese transporte no se importa: Vercel conserva el cliente HTTP y el login privado del servidor. No se copian cookies, claves compartidas ni el módulo `chrome-client.js`. Por ello, esta adaptación no acredita que desaparezca el bloqueo de Cloudflare. Véase [el resultado reproducible de la importación](docs/importacion-local.md).
 
 La comparación y los límites de las conclusiones están en [docs/diagnostico-2026-10-23.md](docs/diagnostico-2026-10-23.md).
 
