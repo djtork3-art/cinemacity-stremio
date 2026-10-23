@@ -25,5 +25,11 @@
       "source": "/c/:config/stream/:type/:id.json",
       "destination": "/api/index?path=c/:config/stream/:type/:id.json"
     }
-  ]
+  ],
+  "installCommand": "npm install --ignore-scripts --no-package-lock --no-audit --no-fund",
+  "functions": {
+    "api/session-probe.js": {
+      "maxDuration": 120
+    }
+  }
 }
