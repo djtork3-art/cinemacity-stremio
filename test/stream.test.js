@@ -4,11 +4,13 @@ const assert = require('node:assert/strict');
 process.env.TMDB_API_KEY='test-private-key';
 process.env.CINEMACITY_COOKIE='test-private-session';
 process.env.CINEMACITY_URL='https://site.test';
-const {streamHandler} = require('../index');
+let streamHandler;
 const originalFetch = global.fetch;
-const search = '<div class="dar-short_item"><a href="/123.html">Test Movie (2026)</a></div>';
+const search = '<urlset><url><loc>https://site.test/movies/1-test-movie-2026.html</loc></url><url><loc>https://site.test/tv-series/2-test-movie-2026.html</loc></url></urlset>';
 const detail = data => `<script>atob('${Buffer.from(`file: '${typeof data === 'string' ? data : JSON.stringify(data)}'`).toString('base64')}')</script>`;
 function mock(t, page) {
+  delete require.cache[require.resolve('../index')];
+  ({streamHandler}=require('../index'));
   const calls=[];
   global.fetch=async(url,opts)=>{
     calls.push({url,opts});
@@ -23,14 +25,14 @@ function mock(t, page) {
   return calls;
 }
 test('full movie flow returns stream and never exposes cookie/API key',async t=>{
-  mock(t,url=>new Response(url.includes('story=')?search:detail('https://media.test/movie.m3u8')));
+  mock(t,url=>new Response(url.endsWith('/news_pages.xml')?search:detail('https://media.test/movie.m3u8')));
   const result=await streamHandler({type:'movie',id:'tmdb:123'});
   assert.equal(result.streams[0].url,'https://media.test/movie.m3u8');
   assert.equal(result.streams[0].behaviorHints.notWebReady,true);
   assert.doesNotMatch(JSON.stringify(result),/test-private/);
 });
 test('guest detail with an empty player is diagnosed as login required',async t=>{
-  mock(t,url=>new Response(url.includes('story=')?search:'<script>window.CCDeviceGuardRuntime={authenticated:false};</script>'+detail('')));
+  mock(t,url=>new Response(url.endsWith('/news_pages.xml')?search:'<script>window.CCDeviceGuardRuntime={authenticated:false};</script>'+detail('')));
   const errors=[]; const old=console.error; console.error=(...args)=>errors.push(args);
   t.after(()=>{console.error=old;});
   assert.deepEqual(await streamHandler({type:'series',id:'tmdb:123:1:1'}),{streams:[]});
@@ -40,7 +42,7 @@ test('guest detail with an empty player is diagnosed as login required',async t=
 });
 test('authenticated empty player is distinguished from a missing payload',async t=>{
   let page='';
-  mock(t,url=>new Response(url.includes('story=')?search:'<script>window.CCDeviceGuardRuntime={authenticated:true};</script>'+page));
+  mock(t,url=>new Response(url.endsWith('/news_pages.xml')?search:'<script>window.CCDeviceGuardRuntime={authenticated:true};</script>'+page));
   const errors=[];const old=console.error;console.error=(...args)=>errors.push(args);
   t.after(()=>{console.error=old;});
   page=detail('');
@@ -51,7 +53,7 @@ test('authenticated empty player is distinguished from a missing payload',async 
   assert.equal(errors.pop()[1].kind,'player_payload_missing');
 });
 test('series selects episode 1 instead of episode 10',async t=>{
-  mock(t,url=>new Response(url.includes('story=')?search:detail([
+  mock(t,url=>new Response(url.endsWith('/news_pages.xml')?search:detail([
     {title:'Season 10',folder:[{title:'Episode 1',file:'https://media.test/wrong-season.m3u8'}]},
     {title:'Season 1',folder:[{title:'Episode 10',file:'https://media.test/wrong-episode.m3u8'},{title:'Episode 1',file:'https://media.test/correct.m3u8'}]}
   ])));
@@ -63,7 +65,7 @@ test('blocked search stops without fallback, login or secret logs',async t=>{
   t.after(()=>{console.error=old;});
   assert.deepEqual(await streamHandler({type:'movie',id:'tmdb:123'}),{streams:[]});
   assert.equal(calls.length,2);
-  assert.equal(errors[0][1].stage,'search');
+  assert.equal(errors[0][1].stage,'catalog');
   assert.equal(errors[0][1].kind,'cloudflare_challenge');
   assert.doesNotMatch(JSON.stringify(errors),/test-private/);
 });
