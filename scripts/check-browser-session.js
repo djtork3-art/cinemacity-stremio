@@ -1,8 +1,8 @@
 'use strict';
 const BASE='https://cinemacity.cc';
-const {authenticationState,loginForm}=require('./site');
-const {networkDiagnostic}=require('./http');
-const {createLocalProvider}=require('./local-provider');
+const {authenticationState,loginForm}=require('../lib/site');
+const {networkDiagnostic}=require('../lib/http');
+const {createLocalProvider}=require('../lib/local-provider');
 const MAX_BYTES=2*1024*1024;
 function safeURL(value){try{const u=new URL(value);return u.origin===BASE&&!u.username&&!u.password;}catch{return false;}}
 function revoked(value){try{return new URL(value).searchParams.get('cc_device_guard')==='device_revoked';}catch{return false;}}
@@ -135,3 +135,23 @@ async function runSessionProbe(options){
   return {...result,elapsedMs:Date.now()-start,checkedAt:new Date().toISOString()};
 }
 module.exports={runSessionProbe,safeURL,revoked,verificationResource};
+
+// Optional Linux diagnostic. It is never invoked by the addon HTTP handlers.
+if(require.main===module){
+  (async()=>{
+    if(process.platform!=='linux'||Number(process.versions.node.split('.')[0])<24){
+      console.log(JSON.stringify({kind:'requires_linux_node_24'}));process.exitCode=1;return;
+    }
+    if(!process.env.CINEMACITY_USERNAME||!process.env.CINEMACITY_PASSWORD){
+      console.log(JSON.stringify({kind:'missing_credentials'}));process.exitCode=1;return;
+    }
+    process.env.DEBUG='';
+    let chromium,puppeteer;
+    try{[{default:chromium},{default:puppeteer}]=await Promise.all([import('@sparticuz/chromium'),import('puppeteer-core')]);}
+    catch{console.log(JSON.stringify({kind:'browser_dependencies_unavailable'}));process.exitCode=1;return;}
+    const launch=async()=>puppeteer.launch({executablePath:await chromium.executablePath(),headless:'shell',
+      args:['--no-sandbox','--disable-setuid-sandbox','--disable-dev-shm-usage','--no-zygote','--single-process'],timeout:15000});
+    const result=await runSessionProbe({launch,username:process.env.CINEMACITY_USERNAME,password:process.env.CINEMACITY_PASSWORD});
+    console.log(JSON.stringify(result,null,2));process.exitCode=result.authenticated?0:1;
+  })().catch(()=>{console.log(JSON.stringify({kind:'browser_probe_failed'}));process.exitCode=1;});
+}

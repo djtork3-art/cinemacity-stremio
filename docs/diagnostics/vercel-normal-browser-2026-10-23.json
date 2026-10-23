@@ -1,0 +1,19 @@
+{
+  "deploymentCommit":"4a74f888752d6f2798eaf22f160dd23680914aba",
+  "credentialsConfigured":true,
+  "credentialsSubmitted":false,
+  "authenticated":false,
+  "cookiesImported":false,
+  "standardJavaScript":true,
+  "verificationRequests":9,
+  "blockedRequests":0,
+  "version":"HeadlessChrome/153.0.8010.0",
+  "login_form":{
+    "httpStatus":403,"challenge":true,"cloudflare":true,"kind":"cloudflare_challenge",
+    "initialHttpStatus":403,"loadReady":false,"waitedMs":25271
+  },
+  "stage":"login_form",
+  "kind":"cloudflare_challenge",
+  "elapsedMs":28315,
+  "checkedAt":"2026-10-23T17:22:04.491Z"
+}

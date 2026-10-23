@@ -1,6 +1,6 @@
 'use strict';
 const {test}=require('node:test'),assert=require('node:assert/strict');
-const {runSessionProbe,safeURL,revoked,verificationResource}=require('../lib/session-probe');
+const {runSessionProbe,safeURL,revoked,verificationResource}=require('../scripts/check-browser-session');
 const BASE='https://cinemacity.cc',action=BASE+'/index.php?do=register';
 const form='<form data-cc-login-form method="post" action="/index.php?do=register"><input name="login_name"><input name="login_password"><input name="login" type="hidden" value="submit"></form>';
 const user='<script>window.CCDeviceGuardRuntime={authenticated:true};</script>',guest='<script>window.CCDeviceGuardRuntime={authenticated:false};</script>';
