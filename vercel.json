@@ -1,29 +1,16 @@
 {
-  "version": 2,
+  "services": {
+    "probe": {
+      "root": ".",
+      "entrypoint": "Dockerfile.vercel"
+    }
+  },
   "rewrites": [
     {
-      "source": "/",
-      "destination": "/index.html"
-    },
-    {
-      "source": "/manifest.json",
-      "destination": "/api/index?path=manifest.json"
-    },
-    {
-      "source": "/health.json",
-      "destination": "/api/index?path=health.json"
-    },
-    {
-      "source": "/stream/:type/:id.json",
-      "destination": "/api/index?path=stream/:type/:id.json"
-    },
-    {
-      "source": "/c/:config/manifest.json",
-      "destination": "/api/index?path=c/:config/manifest.json"
-    },
-    {
-      "source": "/c/:config/stream/:type/:id.json",
-      "destination": "/api/index?path=c/:config/stream/:type/:id.json"
+      "source": "/(.*)",
+      "destination": {
+        "service": "probe"
+      }
     }
   ]
 }
