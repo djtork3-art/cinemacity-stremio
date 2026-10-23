@@ -10,29 +10,32 @@ const okNode = async () => ({text:'<urlset/>',diagnostic:{kind:'ok',httpStatus:2
 function mockBrowser({status = 200,headers = {'content-type':'application/xml'},body = '<urlset/>',gotoError,version = 'HeadlessChrome/138.0.7204.0',responseUrl = TARGET,requests = []} = {}) {
   const calls = {closed:0,buffer:0,continued:[],aborted:[],javascript:null,interception:null};
   const main = {};
-  let requestHandler;
+  const handlers = {};
   const page = {
     setJavaScriptEnabled:async enabled => {calls.javascript = enabled;},
     setRequestInterception:async enabled => {calls.interception = enabled;},
     mainFrame:() => main,
-    on:(event,handler) => {assert.equal(event,'request');requestHandler = handler;},
+    on:(event,handler) => {handlers[event] = handler;},
     goto:async (url,options) => {
       calls.goto = {url,options};
+      const response = {
+        status:() => status,url:() => responseUrl,headers:() => headers,
+        request:() => ({isNavigationRequest:()=>true,frame:()=>main}),
+        buffer:async () => {calls.buffer++;return Buffer.from(body);}
+      };
       const values = [{url:TARGET,main:true,navigation:true,method:'GET'},...requests];
-      for (const value of values) {
-        await requestHandler({
+      for (const [index,value] of values.entries()) {
+        await handlers.request({
           url:() => value.url, method:() => value.method || 'GET',
           isNavigationRequest:() => value.navigation === true,
           frame:() => value.main ? main : {},redirectChain:() => value.redirect ? [{}] : [],
           continue:async () => {calls.continued.push(value.url);},
           abort:async () => {calls.aborted.push(value.url);}
         });
+        if (index === 0) handlers.response(response);
       }
       if (gotoError) throw gotoError;
-      return {
-        status:() => status,url:() => responseUrl,headers:() => headers,
-        buffer:async () => {calls.buffer++;return Buffer.from(body);}
-      };
+      return response;
     }
   };
   const launch = async () => ({newPage:async()=>page,version:async()=>version,close:async()=>{calls.closed++;}});
@@ -135,4 +138,64 @@ test('keeps a bare 403 distinct from a Cloudflare challenge', async () => {
   assert.equal(result.browser.challenge,false);
   assert.equal(result.browser.cloudflare,true);
   assert.equal(calls.closed,1);
+});
+
+test('preserves the first challenge response when a later navigation aborts', async () => {
+  const {launch,calls} = mockBrowser({status:403,headers:{'cf-mitigated':'challenge',server:'cloudflare','content-type':'text/html'},
+    requests:[{url:'https://cinemacity.cc/private-challenge?token=SECRET',main:true,navigation:true,redirect:true}],
+    gotoError:new Error('net::ERR_ABORTED at https://cinemacity.cc/private?secret=SECRET')});
+  const result = await runProbe({launch,requestText:okNode});
+  assert.equal(result.browser.kind,'cloudflare_challenge');
+  assert.equal(result.browser.httpStatus,403);
+  assert.equal(result.browser.challenge,true);
+  assert.equal(result.browser.responseObserved,true);
+  assert.equal(result.browser.navigationAllowed,1);
+  assert.equal(result.browser.rejectedMain,1);
+  assert.equal(result.browser.firstBlockedReason,'redirect');
+  assert.deepEqual(result.browser.codes,['ERR_ABORTED']);
+  assert.equal(calls.closed,1);
+  assert.equal(calls.buffer,0);
+  assert.doesNotMatch(JSON.stringify(result),/SECRET|private|https?:\/\//);
+});
+
+test('classifies redirect destinations without returning Location URLs or queries', async () => {
+  for (const [location,sameOrigin,destinationKind] of [
+    ['/index.php?do=register&token=SECRET',true,'login'],
+    ['/index.php?cc_device_guard=device_revoked&token=SECRET',true,'device_guard'],
+    ['https://other.test/cdn-cgi/challenge-platform/private?secret=SECRET',false,'challenge'],
+    ['/unrelated?private=SECRET',true,'other']
+  ]) {
+    const {launch,calls} = mockBrowser({status:302,headers:{server:'cloudflare',location},
+      requests:[{url:new URL(location,TARGET).href,main:true,navigation:true,redirect:true}],
+      gotoError:new Error('net::ERR_ABORTED at private SECRET')});
+    const result = await runProbe({launch,requestText:okNode});
+    assert.equal(result.browser.kind,'redirect_rejected');
+    assert.equal(result.browser.httpStatus,302);
+    assert.deepEqual(result.browser.redirect,{sameOrigin,destinationKind});
+    assert.equal(result.browser.responseObserved,true);
+    assert.equal(calls.continued.length,1);
+    assert.equal(calls.closed,1);
+    assert.doesNotMatch(JSON.stringify(result),/SECRET|private|other.test|https?:\/\//);
+  }
+});
+
+test('extracts only known Chromium codes from raw error messages', () => {
+  assert.deepEqual(networkDiagnostic(new Error('net::ERR_ABORTED private SECRET ERR_SECRET')),{kind:'network_error',codes:['ERR_ABORTED']});
+  assert.equal(networkDiagnostic(new Error('net::ERR_NAME_NOT_RESOLVED https://secret.test')).kind,'dns_error');
+  assert.equal(networkDiagnostic(new Error('net::ERR_CONNECTION_TIMED_OUT secret')).kind,'timeout');
+});
+
+test('preserves HTTP 200 when the XML viewer repeats the initial navigation', async () => {
+  const {launch,calls} = mockBrowser({status:200,requests:[{url:TARGET,main:true,navigation:true}],gotoError:new Error('net::ERR_ABORTED private SECRET')});
+  const result = await runProbe({launch,requestText:okNode});
+  assert.equal(result.browser.httpStatus,200);
+  assert.equal(result.browser.contentType,'xml');
+  assert.equal(result.browser.kind,'navigation_interrupted');
+  assert.equal(result.browser.firstBlockedReason,'repeated_navigation');
+  assert.equal(result.browser.navigationAllowed,1);
+  assert.equal(result.browser.rejectedMain,1);
+  assert.equal(result.browser.redirect,undefined);
+  assert.equal(calls.closed,1);
+  assert.equal(calls.buffer,0);
+  assert.doesNotMatch(JSON.stringify(result),/SECRET|private/);
 });
