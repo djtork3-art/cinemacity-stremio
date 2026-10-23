@@ -1,0 +1,10 @@
+{
+  "deploymentCommit":"4e3a94717ca5e8e7fbf64fe7df273a5a6fc58612",
+  "experiment":"robots-context-fetch",
+  "accountAccessTested":false,
+  "cookiesImported":false,
+  "version":"HeadlessChrome/153.0.8010.0",
+  "bootstrap":{"httpStatus":200,"challenge":true,"cloudflare":true,"kind":"cloudflare_challenge"},
+  "elapsedMs":4379,
+  "checkedAt":"2026-10-23T16:41:11.479Z"
+}
