@@ -1,0 +1,19 @@
+{
+  "deploymentCommit": "7b765eb8f023be3b0d38fd921f155e9166a1b0a4",
+  "experiment": "anonymous-browser-transport",
+  "accountAccessTested": false,
+  "node": {"kind":"cloudflare_challenge","httpStatus":403,"challenge":true,"cloudflare":true,"elapsedMs":165},
+  "browser": {
+    "kind":"cloudflare_challenge","challenge":true,"cloudflare":true,
+    "navigationAllowed":2,"redirectsAllowed":1,"rejectedMain":0,
+    "responseChain":[
+      {"httpStatus":307,"challenge":false,"cloudflare":false,"contentType":"other","redirect":{"sameOrigin":true,"destinationKind":"other"}},
+      {"httpStatus":403,"challenge":true,"cloudflare":true,"contentType":"html"}
+    ],
+    "catalog":false,"version":"HeadlessChrome/153.0.8010.0",
+    "firstResponse":{"httpStatus":307,"challenge":false,"cloudflare":false,"contentType":"other","redirect":{"sameOrigin":true,"destinationKind":"other"}},
+    "responseObserved":true,"httpStatus":403,"contentType":"html","destinationKind":"other",
+    "firstBlockedReason":"frame_mismatch","elapsedMs":3046
+  },
+  "checkedAt":"2026-10-23T16:00:32.166Z"
+}
