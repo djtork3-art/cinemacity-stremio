@@ -1,0 +1,41 @@
+{
+  "addon": "CinemaCity",
+  "version": "1.1.0",
+  "checkedAt": "2026-10-23T00:18:54.081Z",
+  "runtime": {
+    "node": "24.21.0",
+    "undici": "7.29.1",
+    "openssl": "3.5.7"
+  },
+  "tmdbConfigured": true,
+  "loginConfigured": false,
+  "loginEnabled": false,
+  "publicPage": {
+    "reachable": true,
+    "service": "cinemacity",
+    "stage": "public",
+    "kind": "cloudflare_challenge",
+    "httpStatus": 403,
+    "cloudflare": true,
+    "challenge": true,
+    "elapsedMs": 82
+  },
+  "loginPage": {
+    "reachable": true,
+    "service": "cinemacity",
+    "stage": "login_page",
+    "kind": "cloudflare_challenge",
+    "httpStatus": 403,
+    "cloudflare": true,
+    "challenge": true,
+    "elapsedMs": 76
+  },
+  "authentication": {
+    "verified": false,
+    "status": "not_tested"
+  },
+  "authenticatedSearch": {
+    "verified": false,
+    "status": "not_tested"
+  }
+}

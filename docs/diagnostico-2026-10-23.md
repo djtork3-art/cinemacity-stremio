@@ -40,6 +40,24 @@ Una respuesta `403` demuestra que la conexión llegó a HTTP; `cf-mitigated: cha
 - TMDB utiliza también tiempos de espera y errores clasificados. Validación temprana de IDs y coincidencias numéricas de temporadas/episodios.
 - Pruebas offline con respuestas sintéticas: flujo de película y serie, secretos ausentes en streams/logs, bloqueo sin fallback, 403 sin falsa atribución, desafío HTTP 200, redirects y tamaño/corte del cuerpo.
 
+Resultado final local: **12/12 pruebas pasan**, comprobaciones de sintaxis correctas y manifest del servidor local HTTP 200, versión 1.1.0. Se añadieron un lockfile y overrides compatibles de `path-to-regexp` 0.1.13 y `tmp` 0.2.7. La instalación con consulta de auditoría pasó de 6 alertas a **0 vulnerabilidades detectadas**; esto no equivale a una auditoría completa de seguridad.
+
+## Verificación del despliegue de prueba
+
+- Proyecto: `cinemacity-stremio`, equipo `aceventsports-projects`.
+- Commit de aplicación: `afdaa2e4a4390d9fbdb8a4e93bdf7d2b49a99a90`, rama `fix/http-diagnostics-windows`.
+- Vista previa: [cinemacity-stremio-av0osoy4b-aceventsports-projects.vercel.app](https://cinemacity-stremio-av0osoy4b-aceventsports-projects.vercel.app).
+- Despliegue `dpl_AZHMTswgVpicBXCkkcWye6TF5jXe`, entorno **preview**, estado **READY**, función en `iad1`; construcción observada de unos 13 s.
+- La protección de Vercel redirige peticiones anónimas a autenticación. Se verificaron manifest, health y una consulta de streams mediante el acceso autorizado del CLI; no se desactivó la protección.
+- Manifest: ID `community.cinemacity.bridge`, versión **1.1.0**.
+- Health: ambas peticiones anónimas de origen devuelven **HTTP 403**, `cloudflare: true`, `challenge: true`, `kind: cloudflare_challenge`.
+- Runtime observado en Vercel: **Node 24.21.0, Undici 7.29.1, OpenSSL 3.5.7**, diferente del Node 22 local. El rango de engines `>=20` heredado permite esta diferencia; debe controlarse la versión al comparar motores.
+- TMDB configurado, login desactivado, autenticación/búsqueda autenticada sin verificar. La consulta `/stream/movie/tt0111161.json` devolvió `{"streams":[]}`; no demuestra reproducción ni permite identificar por sí sola la fase del fallo.
+- No se pudieron leer los logs históricos: conexión integrada con HTTP 403 y CLI local 50.8.1 sin la opción `--no-follow`. No se afirma que los logs estén libres de errores.
+- Producción permanece en el despliegue previo, versión 1.0.0; la nueva versión se comprobó en preview. No se realizó una promoción a producción.
+
+Las respuestas anonimizadas están en `diagnostics/windows-2026-10-23.json` y `diagnostics/vercel-health-2026-10-23.json`. No contienen credenciales ni enlaces con tokens de acceso.
+
 No se verificó reproducción real en Stremio ni en Nuvio. La protección del origen sigue siendo un impedimento; no hay base para afirmar que el addon devuelve fuentes reales. El siguiente paso legítimo para resolver acceso es confirmar con el operador un API o método de integración autorizado, o probar una sesión propia dentro de las condiciones que permita el sitio.
 
 ## Fuentes primarias
