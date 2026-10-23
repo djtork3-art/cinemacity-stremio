@@ -19,33 +19,7 @@ module.exports = async (req, res) => {
   if (!chosen) return res.status(404).json({ error: 'Invalid configuration' });
   const endpoint = parts[2];
   if (endpoint === 'health.json' && !parts[1]) {
-    const status = {
-      addon: 'CinemaCity',
-      tmdbConfigured: Boolean(process.env.TMDB_API_KEY),
-      loginConfigured: Boolean(process.env.CINEMACITY_USERNAME && process.env.CINEMACITY_PASSWORD),
-      publicPage: { reachable: false, httpStatus: null },
-      loginPage: { reachable: false, httpStatus: null },
-      authentication: { verified: false, status: 'not_tested' },
-      authenticatedSearch: { verified: false, status: 'not_tested' }
-    };
-    const base = (process.env.CINEMACITY_URL || 'https://cinemacity.cc').replace(/\/$/, '');
-    const check = async (path, target) => {
-      try {
-        const response = await fetch(base + path, {
-          method: 'GET',
-          redirect: 'manual',
-          signal: AbortSignal.timeout(8000)
-        });
-        target.httpStatus = response.status;
-        target.reachable = response.ok || [301, 302, 303].includes(response.status);
-      } catch {
-        target.error = 'connection_failed';
-      }
-    };
-    await Promise.all([
-      check('/', status.publicPage),
-      check('/index.php?do=login', status.loginPage)
-    ]);
+    const status = await require('../lib/health').health();
     res.setHeader('Cache-Control','no-store');
     return res.status(200).json(status);
   }

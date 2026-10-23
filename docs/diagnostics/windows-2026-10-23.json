@@ -1,0 +1,99 @@
+{
+  "checkedAt": "2026-10-22T23:55:53.209Z",
+  "platform": "win32",
+  "runtime": {
+    "node": "22.20.0",
+    "undici": "6.21.2",
+    "openssl": "3.5.2"
+  },
+  "environment": {
+    "nodeOptionsPresent": false,
+    "proxyVariablesPresent": false
+  },
+  "credentialMode": "none",
+  "probes": [
+    {
+      "service": "cinemacity",
+      "host": "cinemacity.cc",
+      "dns": {
+        "kind": "ok",
+        "families": [
+          4
+        ]
+      },
+      "tls": {
+        "stage": "tls",
+        "kind": "connection_reset",
+        "codes": [
+          "ECONNRESET"
+        ],
+        "elapsedMs": 189
+      },
+      "https": {
+        "stage": "https_http1",
+        "kind": "connection_reset",
+        "codes": [
+          "ECONNRESET"
+        ],
+        "elapsedMs": 140
+      },
+      "fetch": {
+        "service": "cinemacity",
+        "stage": "fetch",
+        "kind": "connection_reset",
+        "codes": [
+          "ECONNRESET"
+        ],
+        "elapsedMs": 257
+      }
+    },
+    {
+      "service": "tmdb",
+      "host": "api.themoviedb.org",
+      "fetch": {
+        "service": "tmdb",
+        "stage": "fetch",
+        "kind": "http_unauthorized",
+        "httpStatus": 401,
+        "cloudflare": false,
+        "challenge": false,
+        "elapsedMs": 439
+      }
+    },
+    {
+      "service": "addon_manifest",
+      "host": "cinemacity-stremio.vercel.app",
+      "fetch": {
+        "service": "addon_manifest",
+        "stage": "fetch",
+        "kind": "ok",
+        "httpStatus": 200,
+        "cloudflare": false,
+        "challenge": false,
+        "elapsedMs": 377
+      },
+      "addon": {
+        "id": "community.cinemacity.bridge",
+        "version": "1.0.0"
+      }
+    },
+    {
+      "service": "addon_health",
+      "host": "cinemacity-stremio.vercel.app",
+      "fetch": {
+        "service": "addon_health",
+        "stage": "fetch",
+        "kind": "ok",
+        "httpStatus": 200,
+        "cloudflare": false,
+        "challenge": false,
+        "elapsedMs": 343
+      },
+      "addon": {
+        "publicPage": {
+          "httpStatus": 403
+        }
+      }
+    }
+  ]
+}
