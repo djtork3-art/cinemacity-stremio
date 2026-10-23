@@ -1,0 +1,13 @@
+{
+  "deploymentCommit":"5addb8e70ce29a15f92a594bd35820651e95099c",
+  "credentialsConfigured":true,
+  "credentialsSubmitted":false,
+  "authenticated":false,
+  "cookiesImported":false,
+  "version":"HeadlessChrome/153.0.8010.0",
+  "login_form":{"httpStatus":403,"challenge":true,"cloudflare":true,"kind":"cloudflare_challenge"},
+  "stage":"login_form",
+  "kind":"cloudflare_challenge",
+  "elapsedMs":3218,
+  "checkedAt":"2026-10-23T17:01:04.300Z"
+}
