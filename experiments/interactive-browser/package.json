@@ -1,0 +1,1 @@
+{"name":"cinemacity-private-desktop","private":true,"scripts":{"test":"node --test test/*.test.js"},"dependencies":{"@novnc/novnc":"1.7.0","ws":"8.22.0"}}
