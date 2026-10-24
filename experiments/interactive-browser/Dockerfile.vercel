@@ -1,9 +1,9 @@
 FROM node:24-bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends chromium xvfb ca-certificates fonts-liberation && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get install -y --no-install-recommends chromium xvfb x11vnc ca-certificates fonts-liberation && rm -rf /var/lib/apt/lists/*
 WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts --no-audit --no-fund
 COPY . .
-ENV PORT=80 DISPLAY=:99
+ENV PORT=80
 USER node
-CMD ["sh", "-c", "Xvfb :99 -screen 0 1280x900x24 -nolisten tcp >/dev/null 2>&1 & exec node server.js"]
+CMD ["node", "server.js"]

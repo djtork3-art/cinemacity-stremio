@@ -1,10 +1,5 @@
-<!doctype html>
-<html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CinemaCity · navegador privado en Vercel</title><link rel="stylesheet" href="/style.css"><script src="/client.js" defer></script>
-<main><h1>Navegador privado en Vercel</h1><p>Abre CinemaCity e inicia sesión directamente en la pantalla. Es una sesión temporal de hasta cuatro minutos: al desconectarte se cierra el navegador. Esta prueba aún no conecta la sesión con Stremio.</p>
-<section id="access"><label>Clave temporal <input id="key" type="password" autocomplete="off"></label><button id="connect">Conectar</button></section>
-<p id="status" role="status" aria-live="polite">Sin conexión.</p>
-<section id="controls" hidden><div class="toolbar"><button data-command="home">Portada</button><button data-command="back">Atrás</button><button data-command="reload">Recargar</button><button data-key="Tab">Tabulador</button><button data-key="Backspace">Borrar</button><button data-key="Enter">Intro</button><button data-command="verify">Comprobar sesión</button><button data-command="close">Cerrar navegador</button></div>
-<p>Pulsa en la pantalla para elegir un campo y escribe. También puedes pegar texto. Las pulsaciones se envían a este navegador remoto.</p>
-<div class="screen"><img id="screen" tabindex="0" alt="Pantalla del navegador remoto; pulsa para interactuar" draggable="false"></div>
-<div class="paste"><label>Texto para el campo seleccionado <input id="text" type="password" autocomplete="off"></label><button id="send">Escribir en el navegador</button></div>
-<p>La sesión se cierra tras dos minutos sin interacción. No se importan cookies ni se automatiza la resolución de verificaciones.</p></section></main></html>
+<!doctype html><html lang="es"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>CinemaCity · escritorio privado en Vercel</title><link rel="stylesheet" href="/style.css"><script type="module" src="/client.js"></script>
+<main><h1>Escritorio privado en Vercel</h1><p>Chromium convencional manejado mediante escritorio remoto. Pulsa y escribe directamente en la pantalla. No usa Puppeteer ni importa cookies.</p>
+<label>Clave temporal <input id="key" type="password" autocomplete="off"></label><button id="connect">Conectar</button><button id="disconnect" hidden>Cerrar escritorio</button>
+<p id="status" role="status" aria-live="polite">Sin conexión.</p><div id="screen" aria-label="Escritorio remoto de Chromium"></div>
+<p>Sesión temporal de cuatro minutos. Al cerrar o desconectar se elimina el perfil. Esta prueba todavía no está conectada a Stremio.</p></main></html>

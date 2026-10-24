@@ -1,11 +1,11 @@
-# Interfaz privada de Chromium en Vercel
+# Escritorio privado de Chromium convencional
 
-Experimento separado del addon. Permite al propietario abrir CinemaCity en Chromium completo con pantalla virtual y manejarlo mediante imágenes y controles enviados por WebSocket. No importa cookies, no emplea ocultación y no automatiza verificaciones. Solo admite navegación principal a CinemaCity y recursos HTTPS reconocidos del sitio/Cloudflare.
+Sustituye el experimento de Puppeteer por Chromium instalado de Debian, iniciado directamente y manejado mediante Xvfb, x11vnc y noVNC. No usa Puppeteer, WebDriver, CDP, parches de identidad o cambios de cookies. Solo transmite el escritorio y las entradas del usuario.
 
-La vista previa debe conservar Vercel Authentication. Además, cada conexión exige una clave aleatoria temporal cuyo SHA-256 y caducidad se guardan en config.json; la clave no se publica. No hay acceso al protocolo de depuración, archivos, evaluación de código ni exportación de cookies.
+La vista previa conserva Vercel Authentication y una clave temporal con SHA-256 y caducidad. La clave se entrega por el WebSocket cifrado, no por la URL. Cada conexión tiene su propio escritorio y perfil temporal. VNC solo escucha en 127.0.0.1 dentro del contenedor. No se exponen puertos VNC al exterior. La conexión pública solo acepta el mismo origen y requiere autenticarse antes de crear procesos o transmitir VNC.
 
-Cada WebSocket conserva un navegador en su instancia. Se cierra al desconectarse, tras dos minutos sin interacción o al llegar a cuatro minutos. No guarda el perfil para futuras funciones o despliegues, ni hace funcionar automáticamente Stremio. Sirve para verificar si una sesión iniciada directamente en Vercel es aceptada.
+El escritorio dura hasta cuatro minutos y se cierra al desconectar. Entonces se terminan Chromium, x11vnc y Xvfb y se elimina el perfil temporal. Las variables de entorno privadas del addon no se heredan en los procesos del escritorio. El servicio permite hasta dos escritorios simultáneos por instancia.
 
-Dockerfile.vercel instala Chromium y Xvfb de Debian; usa Node 24, Puppeteer Core 25.16.0 y ws 8.22.0. Para reproducir exactamente un despliegue hay que fijar también las versiones del paquete Debian y la imagen base. Las pruebas se ejecutan con npm ci y npm test.
+Este es un navegador convencional: los recursos web se cargan directamente, sin el filtro de peticiones del experimento anterior. Usa la sesión únicamente para tu cuenta y no compartas la clave. La interfaz no está conectada al addon Stremio ni conserva cookies entre conexiones. No garantiza que el sitio acepte el acceso.
 
-La clave no se envía en la URL ni se guarda en almacenamiento del navegador. La pantalla puede contener datos de la cuenta: no compartas la clave ni la vista previa. Las pulsaciones se entregan al campo remoto elegido y no se registran en los logs de la aplicación.
+Validación local: npm ci y npm test. El despliegue real verifica pantalla y transporte VNC. La verificación de Cloudflare y el inicio de sesión corresponden al usuario.
