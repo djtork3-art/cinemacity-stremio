@@ -1,0 +1,1 @@
+{"name":"cinemacity-interactive-check","private":true,"scripts":{"test":"node --test test/*.test.js"},"dependencies":{"puppeteer-core":"25.16.0","ws":"8.22.0"}}
